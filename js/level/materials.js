@@ -15,7 +15,7 @@ function createMaterials(THREE) {
   const floorMap = loadRepeatTexture('texturas/pasadizo_piso/textures/stone_tiles_diff_1k.jpg', 5, 5);
   const wallMap = loadRepeatTexture('texturas/pasadizo_pared/textures/coast_sand_rocks_02_diff_1k.jpg', 4, 2);
   const ceilingMap = loadRepeatTexture('texturas/techo/textures/white_plaster_02_diff_1k.jpg', 4, 4);
-  const doorMap = loadRepeatTexture('texturas/puerta/Chip006_1K-JPG_Color.jpg', 1, 1);
+  const doorMap = loadRepeatTexture('texturas/puerta/DiamondPlate005C_1K-JPG_Color.jpg', 1, 1);
 
   const centralFloorMap = loadRepeatTexture('texturas/central_piso/Marble007_1K-JPG_Color.jpg', 4, 4);
   const centralWallMap = loadRepeatTexture('texturas/central_pared/Marble020_1K-JPG_Color.jpg', 3, 2);
