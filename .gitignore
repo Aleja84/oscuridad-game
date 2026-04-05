@@ -1,9 +1,14 @@
-# Dependencies
-.psci_modules
-.spago
-bower_components
-node_modules
+# VS Code
+.vscode/
 
-# Generated files
-.psci
-output
+# macOS
+.DS_Store
+models/.DS_Store
+**/.DS_Store
+
+# Archivos de Blender (no necesarios en el juego)
+**/*.blend
+**/*.blend1
+
+# Texturas EXR (formato HDR, pesadas y no soportadas por browsers)
+**/*.exr

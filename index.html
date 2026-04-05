@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>OSCURIDAD — Horror Game</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Courier New',monospace}
+    #canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;display:block}
+    #ui{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
+    #crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px}
+    #crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(255,255,255,0.6)}
+    #crosshair::before{width:2px;height:100%;left:50%;transform:translateX(-50%)}
+    #crosshair::after{width:100%;height:2px;top:50%;transform:translateY(-50%)}
+    #inventory{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:15px}
+    .inv-slot{width:60px;height:60px;border:2px solid rgba(255,150,0,0.5);background:rgba(0,0,0,0.7);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#ff9900;transition:border-color 0.3s}
+    .inv-slot.filled{border-color:rgba(255,150,0,1)}
+    #message{position:absolute;bottom:120px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#ff9900;padding:10px 20px;border:1px solid #ff9900;border-radius:4px;font-size:14px;opacity:0;transition:opacity 0.5s;text-align:center;white-space:nowrap}
+    #interact-prompt{position:absolute;bottom:180px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.8);font-size:13px;opacity:0;transition:opacity 0.3s;text-align:center}
+    #interact-prompt span{background:rgba(255,150,0,0.3);border:1px solid #ff9900;padding:2px 8px;border-radius:3px;color:#ff9900;font-weight:bold}
+    #batteries-hud{position:absolute;top:20px;right:20px;color:#ff9900;font-size:13px;text-align:right;line-height:1.6}
+    #stun-hud{position:absolute;bottom:20px;left:20px;color:#cc44ff;font-size:13px;line-height:1.6}
+    #stun-charges{font-size:20px;letter-spacing:4px}
+    #keys-hud{position:absolute;top:20px;left:20px;color:#ff9900;font-size:13px;line-height:1.6}
+    .hud-label{color:rgba(255,150,0,0.5);margin-bottom:6px;font-size:11px;letter-spacing:2px}
+    .battery-icon{font-size:18px}
+    .battery-icon.empty{opacity:0.3;filter:grayscale(1)}
+    #key-slots{display:flex;gap:6px}
+    .key-slot{width:52px;height:52px;border:1px solid rgba(255,150,0,0.2);background:rgba(0,0,0,0.6);border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;opacity:0.25;transition:opacity 0.4s,border-color 0.4s}
+    .key-slot .ks-icon{font-size:18px;line-height:1}
+    .key-slot .ks-name{font-size:7px;color:rgba(255,150,0,0.8);letter-spacing:1px;text-align:center;line-height:1.2}
+    .key-slot.held{opacity:1;border-color:rgba(255,180,0,0.9);box-shadow:0 0 8px rgba(255,180,0,0.4)}
+    .key-slot.used{opacity:0.6;border-color:rgba(0,220,80,0.7);box-shadow:0 0 6px rgba(0,220,80,0.3)}
+    .key-slot.used .ks-icon::after{content:'✓';font-size:10px;color:#00dc50;margin-left:2px}
+    #vignette{display:none}
+    #flashlight-overlay{position:fixed;inset:0;pointer-events:none;z-index:5;transition:opacity 0.35s}
+    .fl-on{background:radial-gradient(circle 52vmin at 50% 50%, rgba(255,200,100,0.07) 0%, rgba(255,200,100,0.03) 35%, transparent 50%, rgba(0,0,0,0.82) 64%, rgba(0,0,0,0.99) 74%, rgba(0,0,0,1) 100%)}
+    .fl-off{background:rgba(0,0,0,0.97)}
+    #noise{position:absolute;inset:0;opacity:0.03;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")}
+    #timer-hud{position:absolute;top:20px;left:50%;transform:translateX(-50%);color:rgba(255,100,100,0.7);font-size:12px;letter-spacing:2px}
+    #fps-hud{position:fixed;bottom:20px;right:20px;color:#00ff88;font-size:13px;font-family:'Courier New',monospace;background:rgba(0,0,0,0.6);padding:4px 10px;border:1px solid rgba(0,255,136,0.3);border-radius:3px;z-index:20;display:none;pointer-events:none}
+    #start-screen{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;color:#fff}
+    #start-screen h1{font-size:72px;letter-spacing:20px;color:#cc0000;text-shadow:0 0 40px #cc0000;font-family:'Courier New',monospace;margin-bottom:10px;animation:flicker 3s infinite}
+    #start-screen>p{color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:50px;letter-spacing:4px}
+    .instructions{color:rgba(255,200,100,0.7);font-size:13px;line-height:2;text-align:center;margin-bottom:40px;border:1px solid rgba(255,150,0,0.2);padding:20px 40px}
+    .accent{color:#ff9900}
+    #start-btn{background:transparent;border:2px solid #cc0000;color:#cc0000;padding:15px 50px;font-size:16px;letter-spacing:5px;cursor:pointer;font-family:'Courier New',monospace;transition:all 0.3s;pointer-events:all}
+    #start-btn:hover{background:#cc0000;color:#fff;box-shadow:0 0 30px #cc0000}
+    @keyframes flicker{0%,19%,21%,23%,25%,54%,56%,100%{opacity:1}20%,22%,24%,55%{opacity:0.4}}
+    #win-screen,#lose-screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200}
+    #win-screen{background:rgba(0,20,0,0.95)}
+    #lose-screen{background:rgba(20,0,0,0.95)}
+    #win-screen h1{color:#00ff44;font-size:60px;letter-spacing:10px;text-shadow:0 0 40px #00ff44}
+    #lose-screen h1{color:#ff0000;font-size:60px;letter-spacing:10px;text-shadow:0 0 40px #ff0000}
+    .end-msg{color:rgba(255,255,255,0.6);margin-top:20px;font-size:16px;letter-spacing:3px}
+    .restart-btn{margin-top:40px;background:transparent;border:2px solid currentColor;padding:12px 40px;font-size:14px;letter-spacing:4px;cursor:pointer;font-family:'Courier New',monospace;pointer-events:all;transition:all 0.3s}
+    #win-screen .restart-btn{color:#00ff44}
+    #win-screen .restart-btn:hover{background:#00ff44;color:#000}
+    #lose-screen .restart-btn{color:#ff0000}
+    #lose-screen .restart-btn:hover{background:#ff0000;color:#fff}
+  </style>
+</head>
+<body>
+
+  <canvas id="canvas"></canvas>
+  <div id="flashlight-overlay" class="fl-on"></div>
+
+  <div id="ui">
+    <div id="vignette"></div>
+    <div id="noise"></div>
+    <div id="crosshair"></div>
+    <div id="timer-hud">OSCURIDAD v1.0</div>
+    <div id="debug-hud" style="position:absolute;top:20px;left:50%;transform:translateX(-50%);margin-top:30px;color:#ffff00;font-size:11px;letter-spacing:2px;opacity:0;transition:opacity 0.3s;font-family:'Courier New',monospace;">⚠ DEBUG MODE — Ñ para salir</div>
+    <div id="keys-hud">
+      <div class="hud-label">LLAVES</div>
+      <div id="key-slots">
+        <div class="key-slot" id="key-slot-1">
+          <span class="ks-icon">🗝️</span>
+          <span class="ks-name">LABO<br>RATORIO</span>
+        </div>
+        <div class="key-slot" id="key-slot-2">
+          <span class="ks-icon">🗝️</span>
+          <span class="ks-name">COCINA</span>
+        </div>
+        <div class="key-slot" id="key-slot-3">
+          <span class="ks-icon">🗝️</span>
+          <span class="ks-name">BIBLIO<br>TECA</span>
+        </div>
+      </div>
+    </div>
+    <div id="batteries-hud">
+      <div class="hud-label">BATERÍAS</div>
+      <div id="bat-display">
+        <span class="battery-icon empty" id="bat0">🔋</span>
+        <span class="battery-icon empty" id="bat1">🔋</span>
+        <span class="battery-icon empty" id="bat2">🔋</span>
+      </div>
+    </div>
+      <div id="health-hud" style="position:absolute;bottom:200px;right:20px;color:#00ff44;font-size:16px;font-weight:bold;letter-spacing:2px;text-align:right;transition:color 0.3s;">
+        ❤️ 100/100
+      </div>
+    <div id="stun-hud" style="opacity:0;transition:opacity 0.4s">
+      <div class="hud-label" style="color:rgba(200,68,255,0.5)">ATURDIDOR</div>
+      <div id="stun-charges">●●</div>
+    </div>
+    <div id="interact-prompt"><span>E</span> para interactuar</div>
+    <div id="message"></div>
+    <div id="fps-hud">FPS: --</div>
+  </div>
+
+  <div id="start-screen">
+    <h1>OSCURIDAD</h1>
+    <p>— ENCUENTRA LA SALIDA —</p>
+    <div class="instructions">
+      <strong class="accent">CONTROLES</strong><br>
+      WASD — Moverse &nbsp;|&nbsp; Ratón — Mirar<br>
+      E — Interactuar &nbsp;|&nbsp; F — Linterna<br><br>
+      <strong class="accent">OBJETIVO</strong><br>
+      Encuentra 3 baterías y activa la caja eléctrica<br>
+      Las llaves abren habitaciones con más objetos<br>
+      Escapa por la puerta final
+    </div>
+    <button id="start-btn">ENTRAR</button>
+  </div>
+
+  <div id="win-screen">
+    <h1>¡ESCAPASTE!</h1>
+    <p class="end-msg">Sobreviviste a la oscuridad...</p>
+    <button class="restart-btn" onclick="location.reload()">JUGAR DE NUEVO</button>
+  </div>
+
+  <div id="lose-screen">
+    <h1>GAME OVER</h1>
+    <p class="end-msg">La oscuridad te consumió...</p>
+    <button class="restart-btn" onclick="location.reload()">INTENTAR DE NUEVO</button>
+  </div>
+
+  <!-- Tus librerías locales -->
+  <script src="lib/three.min_r140.js"></script>
+  <script src="lib/GLTFLoader.js"></script>
+
+  <!-- Módulos del juego (en orden) -->
+  <script src="js/config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/hud.js"></script>
+  <script src="js/renderer.js"></script>
+
+  <script src="js/level/materials.js"></script>
+  <script src="js/level/helpers.js"></script>
+  <script src="js/level/rewards.js"></script>
+  <script src="js/level/commonObjects.js"></script>
+  <script src="js/level/roomDecor/centralRoom.js"></script>
+  <script src="js/level/roomDecor/labRoom.js"></script>
+  <script src="js/level/roomDecor/kitchenRoom.js"></script>
+  <script src="js/level/roomDecor/libraryRoom.js"></script>
+  <script src="js/level/roomDecor/basementRoom.js"></script>
+  <script src="js/level/roomDecor/secretRoom.js"></script>
+  <script src="js/level/roomDecor/morgueRoom.js"></script>
+  <script src="js/level/roomDecor/finalRoom.js"></script>
+  <script src="js/level/roomDecor/index.js"></script>
+  <script src="js/level/level.js"></script>
+  <script src="js/context.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/interact.js"></script>
+  <script src="js/horror.js"></script>
+  <script src="js/enemies.js"></script>
+  <script src="js/enemies/ghost.js"></script>
+  <script src="js/enemies/stalker.js"></script>
+  <script src="js/enemies/crawler.js"></script>
+  <script src="js/health.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+</html>
