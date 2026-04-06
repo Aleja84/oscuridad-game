@@ -19,8 +19,8 @@ class Crawler extends Enemy {
     });
     
     this.mesh = new THREE.Mesh(geometry, this.material);
-    this.mesh.castShadow = true;
-    this.mesh.receiveShadow = true;
+    this.mesh.castShadow = false;
+    this.mesh.receiveShadow = false;
     
     const limbGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.6, 6);
     const limbMaterial = new THREE.MeshPhongMaterial({ color: 0x4d2600 });

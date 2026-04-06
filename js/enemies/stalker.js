@@ -30,8 +30,8 @@ class Stalker extends Enemy {
     });
     
     this.mesh = new THREE.Mesh(geometry, this.material);
-    this.mesh.castShadow = true;
-    this.mesh.receiveShadow = true;
+    this.mesh.castShadow = false;
+    this.mesh.receiveShadow = false;
     
     const eyeGeometry = new THREE.SphereGeometry(0.15, 8, 8);
     const eyeMaterial = new THREE.MeshBasicMaterial({ 

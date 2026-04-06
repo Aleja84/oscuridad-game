@@ -26,13 +26,10 @@ function buildFlashlight() {
   flashlight = new THREE.SpotLight(0xfff0dd, CONFIG.FLASHLIGHT_INTENSITY,
     CONFIG.FLASHLIGHT_RANGE, Math.PI / 7, 0.25, 1.5);
   flashlight.castShadow = true;
-  flashlight.shadow.mapSize.width = flashlight.shadow.mapSize.height = 512;
+  flashlight.shadow.mapSize.width = flashlight.shadow.mapSize.height = 256;
   camera.add(flashlight);
   camera.add(flashlight.target);
   flashlight.target.position.set(0, 0, -1);
-
-  // Luz de relleno: ilumina siempre las superficies cercanas al jugador
-  // independientemente de a dónde apunte el SpotLight
   flashlightFill = new THREE.PointLight(0xfff0dd, 9.0, 16, 1.2);
   flashlightFill.position.set(0, 0, -0.3);
   camera.add(flashlightFill);
