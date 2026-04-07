@@ -1,4 +1,5 @@
 function startGame() {
+  stopIntroMusic();
   document.getElementById('start-screen').style.display = 'none';
   gameStarted = true;
   if (typeof setDamageGrace === 'function') {
@@ -35,7 +36,7 @@ function init() {
     // Inicializar sistema de horror
     horrorSystem.init();
         
-    // El spawn se maneja al detectar entrada real a sala (updateRoomEnemies)
+    // El spawn se maneja al detectar entrada real a sala
     var btn = document.getElementById('start-btn');
     if (btn) {
       btn.addEventListener('click', startGame);
@@ -55,7 +56,7 @@ function init() {
   }
 }
 
-// ── FPS counter ──────────────────────────────────────────────
+
 var _fpsVisible = false;
 var _fpsFrames = 0;
 var _fpsLast = performance.now();
@@ -80,7 +81,6 @@ function _updateFPS() {
     _fpsLast = now;
   }
 }
-// ─────────────────────────────────────────────────────────────
 
 function gameLoop() {
     requestAnimationFrame(gameLoop);
@@ -124,17 +124,50 @@ function gameLoop() {
     _updateFPS();
     renderer.render(scene, camera);
 }
-// Esperar a que TODO esté listo — DOM + scripts
+var _introMusic = null;
+var _introStarted = false;
+
+function startIntroMusic() {
+  if (_introStarted) return;
+  _introStarted = true;
+
+  _introMusic = new Audio('sounds/fondo.mp3');
+  _introMusic.loop = true;
+  _introMusic.volume = 0.28;
+  _introMusic.play().catch(function() {});
+}
+
+function stopIntroMusic() {
+  if (!_introMusic) return;
+  var music = _introMusic;
+  var vol = music.volume;
+  var step = vol / 30;
+  var fade = setInterval(function() {
+    vol -= step;
+    if (vol <= 0) {
+      music.pause();
+      music.currentTime = 0;
+      clearInterval(fade);
+    } else {
+      music.volume = vol;
+    }
+  }, 30);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-  // Conectar el botón INMEDIATAMENTE cuando el DOM esté listo
-  // aunque Three.js aún no haya cargado
   var btn = document.getElementById('start-btn');
   if (btn) {
     btn.addEventListener('click', startGame);
   }
+
+  startIntroMusic();
+  document.addEventListener('pointerdown', startIntroMusic, { once: true });
+  document.addEventListener('keydown',     startIntroMusic, { once: true });
 });
 
 window.addEventListener('load', function() {
   // Aquí ya están cargados Three.js y todos los scripts
   init();
 });
+
+
