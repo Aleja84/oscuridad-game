@@ -3,7 +3,7 @@ function initThree() {
   scene.fog = new THREE.FogExp2(0x000000, 0.005);
 
   camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 200);
-  camera.position.set(0, CONFIG.PLAYER_HEIGHT, 0);
+  camera.position.set(0, CONFIG.PLAYER_HEIGHT, -4);
 
   renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: false });
   renderer.setSize(innerWidth, innerHeight);
